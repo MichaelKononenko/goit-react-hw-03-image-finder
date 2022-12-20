@@ -1,67 +1,59 @@
 import { Component } from "react";
-import { ContactList, Filter } from "./contacts/Contacts";
+import { Button } from "./button/Button";
 import { GlobalStyle } from "./GlobalStyle.styled";
-import { NewContactForm } from "./new-contact/NewContact";
+import { ImageGallery } from "./imageGallery/ImageGallery";
+import { ImageGalleryItem } from "./imageGalleryItem/ImageGalleryItem";
+import { Loader } from "./loader/Loader";
+import { Modal } from "./modal/Modal";
+import { Searchbar } from "./searchbar/Searchbar";
+import axios from "axios";
 
+axios.defaults.baseURL = 'https://pixabay.com/api/';
+
+// API key 30834606-0dc24151179eb34ac466f7732 
+
+// url https://pixabay.com/api/?q=cat&page=1&key=your_key&image_type=photo&orientation=horizontal&per_page=12
 export class App extends Component{
+
+    API_KEY = '30834606-0dc24151179eb34ac466f7732';
+
     state = {
-      contacts: [
-        {id: 'id-1', name: 'Rosie Simpson', number: '459-12-56'},
-        {id: 'id-2', name: 'Hermione Kline', number: '443-89-12'},
-        {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
-        {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'},
-      ],
-      filter: '',
+        toSearch: "",
+        page: 1,
+        data: [],
     }
 
-    componentDidMount(){
-      const localData = JSON.parse(localStorage.getItem('contacts')) || null;
-      if(localData) this.setState({contacts: localData});
+    componentDidUpdate(){
+        console.log(this.state.toSearch);
+        console.log(this.state.data);
     }
 
-    componentDidUpdate(_, prevState){
-      if(this.state.contacts !== prevState.contacts){
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+    // async componentDidUpdate() {
+        async findPhoto(){
+        const response = await axios.get(`?q=${this.state.toSearch}&page=${this.state.page}&key=${this.API_KEY}&image_type=photo&orientation=horizontal&per_page=12`);
+        this.setState({ data: response.data.hits });
       }
-
+      
+    onSubmit = event =>{
+        event.preventDefault();
+        const inputText = event.currentTarget.lastChild.value;
+        if (this.state.toSearch === inputText) return;
+        this.setState({toSearch: inputText});
+        this.findPhoto();
     }
 
     render(){
-      return(
-        <div style={{padding: "20px"}}>
-            <GlobalStyle/>
-            <div>
-            <h1 style={{marginBottom: "20px"}}>Phonebook</h1>
-            <NewContactForm submitHandling = {this.submitHandling} />
-
-            <h2 style={{marginBottom: "10px"}}>Contacts</h2>
-            <Filter setFilter={this.setFilter}/>
-            <ContactList contacts={this.state.contacts} filter={this.state.filter} deleteContact={this.deleteContact}/>
-          </div>
+        return(
+        <div className="app">
+            <Searchbar onSubmit={this.onSubmit}/>
+            <ImageGallery/>
+            <Loader/>
+            <Button/>
+            <div className="overlay" style={{display: "none"}}>
+                <Modal/>
+            </div>
         </div>
-      )
+        )    
     }
 
-    submitHandling = event =>{
-      event.preventDefault();
-      const id = this.state.contacts.length + 1;
-      const form = event.currentTarget;
-      const name = form.elements.name.value;
-      const number = form.elements.number.value;
-      this.setState({
-        ...this.state,
-        contacts: [
-          ...this.state.contacts,
-          { id: 'id-'+id, name: name, number: number },
-        ],
-      });
-   }
-   setFilter = event =>{
-    const inpuText = event.currentTarget.value;
-    this.setState({filter: inpuText});
-   }
-   deleteContact = event =>{
-    const targetId = event.currentTarget.id;
-    this.setState(prevState => ({contacts: prevState.contacts.filter(item => item.id !== targetId)}))
-   }
 };
