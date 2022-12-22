@@ -28,8 +28,9 @@ export class App extends Component{
         this.setState({showLoadMode: false, isLoading: true});
         const response = await axios.get(`?q=${this.state.toSearch}&page=${this.state.page}&key=${this.API_KEY}&image_type=photo&orientation=horizontal&per_page=12`);
         this.setState({ data: [...this.state.data, ...response.data.hits], isLoading: false, showLoadMode: true});
+        if(response.lenght.data.hits < 12)this.setState({noMorePhoto: true, isLoading: false, showLoadMode: false});
         }catch{
-            this.setState({noMorePhoto: true, isLoading: false});
+            this.setState({noMorePhoto: true, isLoading: false, showLoadMode: false});
         }
       }
       
