@@ -16,8 +16,8 @@ export class App extends Component{
         page: 1,
         data: [],
         isLoading: false,
-        showLoadMode: false,
         noMorePhoto: false,
+        totalHits: 0,
     }
 
 
@@ -25,12 +25,14 @@ export class App extends Component{
         if(prevState.toSearch === this.state.toSearch && prevState.page === this.state.page) return;
 
         try{
-        this.setState({showLoadMode: false, isLoading: true});
+        this.setState({showLoadMore: false, isLoading: true});
         const response = await axios.get(`?q=${this.state.toSearch}&page=${this.state.page}&key=${this.API_KEY}&image_type=photo&orientation=horizontal&per_page=12`);
-        this.setState({ data: [...this.state.data, ...response.data.hits], isLoading: false, showLoadMode: true});
-        if(response.lenght.data.hits < 12)this.setState({noMorePhoto: true, isLoading: false, showLoadMode: false});
+        console.log(response.data);
+        this.setState({ data: [...this.state.data, ...response.data.hits], isLoading: false, showLoadMore: true, totalHits: response.data.total});
+
+        response.data.hits.length < 12 ? this.setState({noMorePhoto: true}) : this.setState({noMorePhoto: false});
         }catch{
-            this.setState({noMorePhoto: true, isLoading: false, showLoadMode: false});
+            this.setState({noMorePhoto:true, isLoading: false, showLoadMore: false});
         }
       }
       
@@ -48,13 +50,13 @@ export class App extends Component{
     }
 
     render(){
-        const {isLoading, showLoadMode, noMorePhoto} = this.state;
+        const {isLoading, data, noMorePhoto, totalHits} = this.state;
         return(
         <div className="app">
         <GlobalStyle/>
             <Searchbar onSubmit={this.onSubmit}/>
             <ImageGallery images={this.state.data}/>
-            {showLoadMode && <Button loadMore={this.loadMore}/> }
+            {totalHits > data.length && <Button loadMore={this.loadMore}/>}
             {isLoading && <Loader/>}
             {noMorePhoto && <span  style={{margin: "0 auto"}}>Oops no more photo found</span>}
         </div>
